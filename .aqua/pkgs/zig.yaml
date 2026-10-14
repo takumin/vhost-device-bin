@@ -1,0 +1,7 @@
+packages:
+- name: ziglang/zig@0.17.0
+  tags:
+  - zig
+- name: rust-cross/cargo-zigbuild@v0.23.4
+  tags:
+  - zig

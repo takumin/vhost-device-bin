@@ -1,0 +1,36 @@
+{
+	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
+	"extends": [
+		"config:best-practices",
+		"github>aquaproj/aqua-renovate-config#2.13.0",
+		"github>aquaproj/aqua-renovate-config:file#2.13.0(.aqua/.*\\.ya?ml)",
+		"github>aquaproj/aqua-renovate-config:file#2.13.0(.aqua/pkgs/.*\\.ya?ml)"
+	],
+	"timezone": "Asia/Tokyo",
+	"automerge": true,
+	"customManagers": [
+		{
+			"customType": "regex",
+			"managerFilePatterns": ["/^version.json$/"],
+			"matchStrings": ["\"version\": \"(?<currentDigest>[0-9a-f]{40})\"\n"],
+			"currentValueTemplate": "main",
+			"datasourceTemplate": "git-refs",
+			"depNameTemplate": "vhost-device",
+			"packageNameTemplate": "https://github.com/rust-vmm/vhost-device"
+		},
+		{
+			"customType": "regex",
+			"managerFilePatterns": ["/^rust-toolchain.toml$/"],
+			"matchStrings": ["channel = \"(?<currentValue>\\d+\\.\\d+\\.\\d+)\"\n"],
+			"datasourceTemplate": "github-releases",
+			"depNameTemplate": "rust",
+			"packageNameTemplate": "rust-lang/rust"
+		}
+	],
+	"packageRules": [
+		{
+			"matchDepNames": ["vhost-device"],
+			"schedule": ["before 9am"]
+		}
+	]
+}

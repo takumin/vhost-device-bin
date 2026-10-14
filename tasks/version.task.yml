@@ -1,0 +1,81 @@
+# https://taskfile.dev
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+vars:
+  GITHUB_REPOSITORY: rust-vmm/vhost-device
+
+set: [pipefail]
+shopt: [globstar]
+
+includes:
+  tool:
+    taskfile: tool.task.yml
+    internal: true
+  format:
+    taskfile: format.task.yml
+    internal: true
+
+tasks:
+  default:
+    desc: '{{.TASK}}'
+    silent: true
+    cmds:
+    - task: generate
+
+  head:
+    desc: '{{.TASK}}'
+    dir: '{{.ROOT_DIR}}'
+    silent: true
+    deps:
+    - task: tool:aqua:tag:coreutils
+    cmds:
+    - >-
+      git ls-remote 'https://github.com/{{.GITHUB_REPOSITORY}}.git' refs/heads/main
+      | coreutils cut -f1
+
+  generate:
+    desc: '{{.TASK}}'
+    dir: '{{.ROOT_DIR}}'
+    deps:
+    - task: tool:aqua:tag:coreutils
+    - task: tool:aqua:tag:jq
+    status:
+    - |-
+      MTIME="$(coreutils stat -c %Y version.json)"
+      NOW="$(coreutils date +%s)"
+      AGE="$(coreutils expr "$NOW" - "$MTIME")"
+      coreutils test 86400 -gt "$AGE"
+    cmds:
+    - >-
+      task version:head | jq -RM '{version: .}' > version.json
+    - task: format:biome
+
+  check:
+    desc: '{{.TASK}}'
+    dir: '{{.ROOT_DIR}}'
+    deps:
+    - task: tool:aqua:tag:gh
+    - task: tool:aqua:tag:ripgrep
+    status:
+    - coreutils test -z "{{env "BUILD_VERSION"}}"
+    cmds:
+    - >-
+      gh api 'repos/{{.GITHUB_REPOSITORY}}/commits/{{env "BUILD_VERSION"}}' --jq .sha
+      | rg -x '{{env "BUILD_VERSION"}}'
+
+  latest:
+    desc: '{{.TASK}}'
+    dir: '{{.ROOT_DIR}}'
+    silent: true
+    deps:
+    - task: tool:aqua:tag:jq
+    cmds:
+    - jq -r '.version' version.json
+
+  all:
+    desc: '{{.TASK}}'
+    dir: '{{.ROOT_DIR}}'
+    cmds:
+    - task: head
